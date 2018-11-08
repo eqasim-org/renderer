@@ -37,6 +37,7 @@ public class RenderFrame extends JPanel {
 	final private VehicleDatabase vehicleDatabase;
 
 	final private BitSet isAv;
+	final private BitSet isPt;
 
 	public RenderFrame(TraversalDatabase traversalDatabase, LinkDatabase linkDatabase,
 			ActivityDatabase activityDatabase, ActivityTypeMapper activityTypeMapper, VehicleDatabase vehicleDatabase) {
@@ -51,17 +52,22 @@ public class RenderFrame extends JPanel {
 		setBackground(Color.WHITE);
 
 		this.isAv = new BitSet(vehicleDatabase.getVehicleIndices().size());
+		this.isPt = new BitSet(vehicleDatabase.getVehicleIndices().size());
 
 		for (Map.Entry<String, Integer> entry : vehicleDatabase.getVehicleIndices().entrySet()) {
 			if (entry.getKey().contains("av")) {
 				isAv.set(entry.getValue());
 			}
+			
+			if (entry.getKey().startsWith("vehicle_")) {
+				isPt.set(entry.getValue());
+			}
 		}
 	}
 
-	private double time = 13.0 * 3600.0;
+	private double time = 8.0 * 3600.0;
 	private long previousRenderTime = -1;
-	private boolean makeVideo = true;
+	private boolean makeVideo = false;
 
 	double timeStepPerSecond = 120.0;
 	double framesPerSecond = 25.0;
@@ -70,7 +76,7 @@ public class RenderFrame extends JPanel {
 
 	Object imageLock = new Object();
 
-	boolean useSvg = true;
+	boolean useSvg = false;
 
 	@Override
 	public void paintComponent(Graphics windowGraphics) {
@@ -112,8 +118,8 @@ public class RenderFrame extends JPanel {
 		// Coord bellevue = new Coord(2683253.0, 1246745.0);
 		// double zoom = 10000.0;
 
-		Coord bellevue = CoordUtils.plus(new Coord(2683253.0, 1246745.0), new Coord(-10000.0, 0.0));
-		double zoom = 15000.0;
+		Coord bellevue = CoordUtils.plus(new Coord(2000.0, 6000.0), new Coord(0.0, 0.0));
+		double zoom = 20000.0;
 
 		double f = (double) Main.windowHeight / (double) Main.windowWidth;
 
@@ -130,7 +136,8 @@ public class RenderFrame extends JPanel {
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		linkDatabase.getLinks().stream().filter(l -> scenarioBounds.contains(l.getCoord().getX(), l.getCoord().getY()))
-				.filter(l -> l.getAllowedModes().contains("car")).forEach(l -> {
+				//.filter(l -> l.getAllowedModes().contains("car"))
+				.forEach(l -> {
 					g2d.setColor(new Color(200, 200, 200));
 
 					Coord fromCoord = transform.scenarioToWindow(l.getFromNode().getCoord());
@@ -146,6 +153,8 @@ public class RenderFrame extends JPanel {
 				.sequential().forEach(t -> {
 					if (isAv.get(t.vehicleIndex)) {
 						g2d.setColor(Color.BLUE.darker());
+					} else if (isPt.get(t.vehicleIndex)) {
+						g2d.setColor(Color.GREEN.darker());
 					} else {
 						g2d.setColor(Color.GRAY);
 					}
@@ -165,8 +174,8 @@ public class RenderFrame extends JPanel {
 		double activityMarkerLifetime = 120.0;
 		double activityMarkerSize = 30.0;
 
-		int pickupTypeIndex = activityTypeMapper.getIndex("AVPickup");
-		int dropoffTypeIndex = activityTypeMapper.getIndex("AVDropoff");
+		int pickupTypeIndex = activityTypeMapper.hasActivityType("AVPickup") ? activityTypeMapper.getIndex("AVPickup") : -1;
+		int dropoffTypeIndex = activityTypeMapper.hasActivityType("AVDropoff") ? activityTypeMapper.getIndex("AVDropoff") : -1;
 
 		activityDatabase.getActivitiesAtTime(time)
 				.filter(t -> scenarioBounds.contains(linkDatabase.getLink(t.linkIndex).getCoord().getX(),
@@ -178,7 +187,7 @@ public class RenderFrame extends JPanel {
 
 					double lifetime = time - a.startTime;
 					double maximumLifetime = Math.min(activityMarkerLifetime, a.endTime - a.startTime);
-
+					
 					if (lifetime <= activityMarkerLifetime) {
 						double intensity = lifetime / maximumLifetime;
 

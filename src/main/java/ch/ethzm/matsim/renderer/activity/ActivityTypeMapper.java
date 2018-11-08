@@ -28,6 +28,10 @@ public class ActivityTypeMapper {
 	public String getActivityType(int index) {
 		return types.get(index);
 	}
+	
+	public boolean hasActivityType(String activityType) {
+		return map.containsKey(activityType);
+	}
 
 	public int getIndex(String activityType) {
 		Integer result = map.get(activityType);

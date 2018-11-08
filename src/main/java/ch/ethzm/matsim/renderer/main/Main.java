@@ -26,6 +26,8 @@ public class Main {
 	final static int windowHeight = 720;
 
 	static public void main(String[] args) {
+		// ffmpeg -framerate 25 -i video_%d.jpg -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4
+		
 		double startTime = 0.0 * 3600.0;
 		double endTime = 24.0 * 3600.0;
 		double binSize = 300.0;
@@ -39,8 +41,8 @@ public class Main {
 		//String networkFile = "/home/sebastian/vidsmall/astra_network.xml.gz";
 		//String eventsFile = "/home/sebastian/vidsmall/0.events.xml.gz";
 
-		String networkFile = "/home/sebastian/vid/astra_network.xml.gz";
-		String eventsFile = "/home/sebastian/vid/160.events.xml.gz";
+		String networkFile = "/home/sebastian/lima/lima_poc3/output_intermodal/output_network.xml.gz";
+		String eventsFile = "/home/sebastian/lima/lima_poc3/output_intermodal/output_events.xml.gz";
 
 		Network network = NetworkUtils.createNetwork();
 		new MatsimNetworkReader(network).readFile(networkFile);
