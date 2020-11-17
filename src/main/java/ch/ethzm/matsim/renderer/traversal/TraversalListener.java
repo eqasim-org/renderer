@@ -42,7 +42,7 @@ public class TraversalListener
 		LinkEnterEvent enterEvent = enterEvents.get(leaveEvent.getVehicleId());
 
 		if (enterEvent != null) {
-			int linkIndex = linkDatabase.getIndex(network.getLinks().get(enterEvent.getLinkId()));
+			int linkIndex = enterEvent.getLinkId().index();
 			Traversal traversal = new Traversal(linkIndex, -1, vehicleDatabase.addVehicle(enterEvent.getVehicleId()),
 					enterEvent.getTime(), leaveEvent.getTime());
 			traversalDatabase.addTraversal(traversal);

@@ -3,6 +3,7 @@ package ch.ethzm.matsim.renderer.traversal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -21,7 +22,7 @@ public class TraversalDatabase {
 		this.traversals = new ArrayList<>(numberOfBins);
 
 		for (int i = 0; i < numberOfBins; i++) {
-			traversals.add(new ArrayList<>());
+			traversals.add(new LinkedList<>());
 		}
 	}
 

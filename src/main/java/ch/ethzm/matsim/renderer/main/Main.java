@@ -26,8 +26,9 @@ public class Main {
 	final static int windowHeight = 720;
 
 	static public void main(String[] args) {
-		// ffmpeg -framerate 25 -i video_%d.jpg -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4
-		
+		// ffmpeg -framerate 25 -i video_%d.png -c:v libx264 -profile:v high -crf 20
+		// -pix_fmt yuv420p output.mp4
+
 		double startTime = 0.0 * 3600.0;
 		double endTime = 24.0 * 3600.0;
 		double binSize = 300.0;
@@ -38,12 +39,37 @@ public class Main {
 		ActivityTypeMapper activityTypeMapper = new ActivityTypeMapper();
 		VehicleDatabase vehicleDatabase = new VehicleDatabase();
 
-		//String networkFile = "/home/sebastian/vidsmall/astra_network.xml.gz";
-		//String eventsFile = "/home/sebastian/vidsmall/0.events.xml.gz";
+		// String networkFile = "/home/sebastian/vidsmall/astra_network.xml.gz";
+		// String eventsFile = "/home/sebastian/vidsmall/0.events.xml.gz";
 
-		String networkFile = "/home/sebastian/lima/lima_poc3/output_intermodal/output_network.xml.gz";
-		String eventsFile = "/home/sebastian/lima/lima_poc3/output_intermodal/output_events.xml.gz";
+		// String networkFile =
+		// "/home/shoerl/scenarios/data/norway/cache/matsim.run_cache/simulation_output/output_network.xml.gz";
+		// String eventsFile =
+		// "/home/shoerl/scenarios/data/norway/cache/matsim.run_cache/simulation_output/output_events_filtered.xml.gz";
 
+		// String networkFile =
+		// "/home/shoerl/Downloads/toulouse_simulated/output_network.xml.gz";
+		// String eventsFile =
+		// "/home/shoerl/Downloads/toulouse_simulated/output_events_filtered.xml.gz";
+
+		String networkFile = "/home/shoerl/Downloads/idf_simulated/output_network.xml.gz";
+		String eventsFile = "/home/shoerl/Downloads/idf_simulated/output_events_filtered.xml.gz";
+
+		networkFile = "/home/shoerl/scenarios/data/ile_de_france/output_rhone_alpes/ile_de_france_network.xml.gz";
+		eventsFile = "/home/shoerl/scenarios/data/ile_de_france/output_rhone_alpes/simulation_output/filtered_events.xml.gz";
+		
+		networkFile = "/home/shoerl/Downloads/toulouse_output_5pct/output_network.xml.gz";
+		eventsFile = "/home/shoerl/Downloads/toulouse_output_5pct/output_events.xml.gz";
+		
+		//networkFile = "/home/shoerl/scenarios/output/lyon/simulation_output/output_network.xml.gz";
+		//eventsFile = "/home/shoerl/scenarios/output/lyon/simulation_output/output_events.xml.gz";
+		
+		//networkFile = "/home/shoerl/scenarios/output/lyon/output_lead_hub/output_network.xml.gz";
+		//eventsFile = "/home/shoerl/scenarios/output/lyon/output_lead_hub/output_events.xml.gz";
+		
+		networkFile = "/home/shoerl/pt_sim/ile_de_france_network.xml.gz";
+		eventsFile = "/home/shoerl/pt_sim/0.events.xml.gz";
+		
 		Network network = NetworkUtils.createNetwork();
 		new MatsimNetworkReader(network).readFile(networkFile);
 
