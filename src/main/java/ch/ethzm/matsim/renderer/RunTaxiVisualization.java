@@ -2,12 +2,13 @@ package ch.ethzm.matsim.renderer;
 
 import java.util.Arrays;
 
+import ch.ethzm.matsim.renderer.config.ActivityConfig;
 import ch.ethzm.matsim.renderer.config.NetworkConfig;
 import ch.ethzm.matsim.renderer.config.RenderConfig;
 import ch.ethzm.matsim.renderer.config.VehicleConfig;
 import ch.ethzm.matsim.renderer.main.RunRenderer;
 
-public class RunSubwayVisualization {
+public class RunTaxiVisualization {
 	static public void main(String[] args) {
 		/*-
 		 * This script writes a series of png files to an output directory,
@@ -25,8 +26,8 @@ public class RunSubwayVisualization {
 		renderConfig.width = 1280;
 		renderConfig.height = 720;
 
-		renderConfig.networkPath = "/home/shoerl/pt_sim/ile_de_france_network.xml.gz";
-		renderConfig.eventsPath = "/home/shoerl/pt_sim/0.events.xml.gz";
+		renderConfig.networkPath = "/home/shoerl/Downloads/taxi/output_network.xml.gz";
+		renderConfig.eventsPath = "/home/shoerl/Downloads/taix/output_events.xml.gz";
 		renderConfig.outputPath = "/home/shoerl/video";
 
 		renderConfig.startTime = 8.0 * 3600.0;
@@ -41,17 +42,17 @@ public class RunSubwayVisualization {
 		NetworkConfig roadNetwork = new NetworkConfig();
 		renderConfig.networks.add(roadNetwork);
 		roadNetwork.modes = Arrays.asList("car");
-		roadNetwork.color = Arrays.asList(240, 240, 240);
+		roadNetwork.color = Arrays.asList(200, 200, 200);
 
-		NetworkConfig subwayNetwork = new NetworkConfig();
-		renderConfig.networks.add(subwayNetwork);
-		subwayNetwork.modes = Arrays.asList("subway");
-		subwayNetwork.color = Arrays.asList(200, 200, 200);
+		VehicleConfig taxiVehicle = new VehicleConfig();
+		renderConfig.vehicles.add(taxiVehicle);
+		taxiVehicle.contains = Arrays.asList("amodeus");
+		taxiVehicle.color = Arrays.asList(0, 0, 0);
 
-		VehicleConfig ptVehicle = new VehicleConfig();
-		renderConfig.vehicles.add(ptVehicle);
-		ptVehicle.contains = Arrays.asList("subway");
-		ptVehicle.color = Arrays.asList(7, 145, 222);
+		ActivityConfig pudoActivity = new ActivityConfig();
+		renderConfig.activities.add(pudoActivity);
+		pudoActivity.types = Arrays.asList("pickup", "dropoff");
+		pudoActivity.color = Arrays.asList(7, 145, 222);
 
 		// END CONFIGURATION
 

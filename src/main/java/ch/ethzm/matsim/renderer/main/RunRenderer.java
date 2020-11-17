@@ -25,6 +25,8 @@ import ch.ethzm.matsim.renderer.traversal.VehicleDatabase;
 public class RunRenderer {
 
 	static public void run(RenderConfig renderConfig) {
+		renderConfig.validate();
+		
 		// Prepare databases to read information
 
 		double startTime = renderConfig.startTime;
