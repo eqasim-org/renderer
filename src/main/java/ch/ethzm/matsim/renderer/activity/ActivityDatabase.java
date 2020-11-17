@@ -29,7 +29,10 @@ public class ActivityDatabase {
 		int startBin = (int) Math.floor((traversal.startTime - startTime) / binSize);
 		int endBin = (int) Math.floor((traversal.endTime - startTime) / binSize);
 
-		if (startBin > 0 && startBin < numberOfBins && endBin > 0 && endBin < numberOfBins) {
+		if ((startBin >= 0 && startBin < numberOfBins) || (endBin >= 0 && endBin < numberOfBins)) {
+			startBin = Math.max(0, startBin);
+			endBin = Math.min(numberOfBins - 1, endBin);
+
 			for (int bin = startBin; bin <= endBin; bin++) {
 				activities.get(bin).add(traversal);
 			}
@@ -38,13 +41,13 @@ public class ActivityDatabase {
 
 	public Collection<ActivitySlice> getActivitiesForBin(double time) {
 		int bin = (int) Math.floor((time - startTime) / binSize);
-		return (bin > 0 && bin < numberOfBins) ? activities.get(bin) : Collections.emptyList();
+		return (bin >= 0 && bin < numberOfBins) ? activities.get(bin) : Collections.emptyList();
 	}
 
 	public Stream<ActivitySlice> getActivitiesAtTime(double time) {
 		return getActivitiesForBin(time).parallelStream().filter(t -> t.startTime <= time && t.endTime > time);
 	}
-	
+
 	public List<List<ActivitySlice>> getData() {
 		return activities;
 	}

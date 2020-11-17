@@ -27,7 +27,7 @@ public class RunTaxiVisualization {
 		renderConfig.height = 720;
 
 		renderConfig.networkPath = "/home/shoerl/Downloads/taxi/output_network.xml.gz";
-		renderConfig.eventsPath = "/home/shoerl/Downloads/taix/output_events.xml.gz";
+		renderConfig.eventsPath = "/home/shoerl/Downloads/taxi/output_events.xml.gz";
 		renderConfig.outputPath = "/home/shoerl/video";
 
 		renderConfig.startTime = 8.0 * 3600.0;
@@ -36,13 +36,17 @@ public class RunTaxiVisualization {
 
 		renderConfig.showTime = false;
 
-		renderConfig.center = Arrays.asList(651791.0 - 5000.0, 6862293.0);
+		renderConfig.center = Arrays.asList(2683253.0, 1246745.0);
 		renderConfig.zoom = 10000.0;
 
 		NetworkConfig roadNetwork = new NetworkConfig();
 		renderConfig.networks.add(roadNetwork);
 		roadNetwork.modes = Arrays.asList("car");
 		roadNetwork.color = Arrays.asList(200, 200, 200);
+
+		VehicleConfig generalVehicle = new VehicleConfig();
+		renderConfig.vehicles.add(generalVehicle);
+		generalVehicle.color = Arrays.asList(200, 200, 200);
 
 		VehicleConfig taxiVehicle = new VehicleConfig();
 		renderConfig.vehicles.add(taxiVehicle);
