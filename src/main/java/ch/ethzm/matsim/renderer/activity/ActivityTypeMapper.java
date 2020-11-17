@@ -5,16 +5,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ch.ethzm.matsim.renderer.config.ActivityConfig;
+import ch.ethzm.matsim.renderer.config.RenderConfig;
+
 public class ActivityTypeMapper {
 	final private Map<String, Integer> map = new HashMap<>();
 	final private List<String> types = new ArrayList<>();
+
+	private int getType(String activityType) {
+		int selectedIndex = 0;
+
+		for (ActivityConfig activityConfig : renderConfig.activities) {
+			if (activityConfig.isGeneric() || activityConfig.types.contains(activityType)) {
+				return selectedIndex;
+			}
+
+			selectedIndex++;
+		}
+
+		return -1;
+	}
 
 	public int addActivityType(String activityType) {
 		if (map.containsKey(activityType)) {
 			return map.get(activityType);
 		}
 
-		int index = map.size();
+		int index = getType(activityType);
 		map.put(activityType, index);
 		types.add(activityType);
 
@@ -28,7 +45,7 @@ public class ActivityTypeMapper {
 	public String getActivityType(int index) {
 		return types.get(index);
 	}
-	
+
 	public boolean hasActivityType(String activityType) {
 		return map.containsKey(activityType);
 	}
@@ -41,5 +58,11 @@ public class ActivityTypeMapper {
 		}
 
 		return result;
+	}
+
+	private final RenderConfig renderConfig;
+
+	public ActivityTypeMapper(RenderConfig renderConfig) {
+		this.renderConfig = renderConfig;
 	}
 }

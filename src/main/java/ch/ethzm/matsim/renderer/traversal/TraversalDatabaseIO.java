@@ -18,6 +18,7 @@ public class TraversalDatabaseIO {
 				writer.writeDouble(traversal.endTime);
 				writer.writeInt(traversal.linkIndex);
 				writer.writeInt(traversal.vehicleIndex);
+				writer.writeInt(traversal.vehicleType);
 			}
 		}
 
@@ -32,8 +33,9 @@ public class TraversalDatabaseIO {
 			double endTime = reader.readDouble();
 			int linkIndex = reader.readInt();
 			int vehicleIndex = reader.readInt();
+			int typeIndex = reader.readInt();
 
-			database.addTraversal(new Traversal(linkIndex, -1, vehicleIndex, startTime, endTime));
+			database.addTraversal(new Traversal(linkIndex, -1, vehicleIndex, startTime, endTime, typeIndex));
 		}
 
 		reader.close();

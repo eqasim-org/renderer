@@ -2,13 +2,19 @@ package ch.ethzm.matsim.renderer.network;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.matsim.api.core.v01.network.Link;
 
-public class LinkDatabase {
-	final private ArrayList<Link> links = new ArrayList<>(100000);
+import ch.ethzm.matsim.renderer.config.NetworkConfig;
+import ch.ethzm.matsim.renderer.config.RenderConfig;
 
-	public LinkDatabase() {
+public class LinkDatabase {
+	private final ArrayList<LinkRepresentation> links = new ArrayList<>(100000);
+	private final List<NetworkConfig> networks;
+
+	public LinkDatabase(RenderConfig renderConfig) {
+		this.networks = renderConfig.networks;
 	}
 
 	public int addLink(Link link) {
@@ -18,11 +24,25 @@ public class LinkDatabase {
 			links.add(null);
 		}
 
-		links.set(link.getId().index(), link);
+		int typeIndex = -1;
+
+		int selectedIndex = 0;
+
+		for (NetworkConfig network : networks) {
+			for (String mode : network.modes) {
+				if (link.getAllowedModes().contains(mode)) {
+					typeIndex = selectedIndex;
+				}
+			}
+
+			selectedIndex++;
+		}
+
+		links.set(link.getId().index(), new LinkRepresentation(link, typeIndex));
 		return link.getId().index();
 	}
 
-	public Link getLink(int index) {
+	public LinkRepresentation getLink(int index) {
 		return links.get(index);
 	}
 
@@ -34,7 +54,7 @@ public class LinkDatabase {
 		return link.getId().index();
 	}
 
-	public Collection<Link> getLinks() {
+	public Collection<LinkRepresentation> getLinks() {
 		return links;
 	}
 }

@@ -43,8 +43,11 @@ public class TraversalListener
 
 		if (enterEvent != null) {
 			int linkIndex = enterEvent.getLinkId().index();
-			Traversal traversal = new Traversal(linkIndex, -1, vehicleDatabase.addVehicle(enterEvent.getVehicleId()),
-					enterEvent.getTime(), leaveEvent.getTime());
+			int vehicleIndex = vehicleDatabase.addVehicle(enterEvent.getVehicleId());
+			int vehicleType = vehicleDatabase.getType(vehicleIndex);
+
+			Traversal traversal = new Traversal(linkIndex, -1, vehicleIndex, enterEvent.getTime(), leaveEvent.getTime(),
+					vehicleType);
 			traversalDatabase.addTraversal(traversal);
 		}
 	}

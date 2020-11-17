@@ -9,7 +9,9 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -22,6 +24,10 @@ import org.matsim.core.utils.misc.Time;
 
 import ch.ethzm.matsim.renderer.activity.ActivityDatabase;
 import ch.ethzm.matsim.renderer.activity.ActivityTypeMapper;
+import ch.ethzm.matsim.renderer.config.ActivityConfig;
+import ch.ethzm.matsim.renderer.config.NetworkConfig;
+import ch.ethzm.matsim.renderer.config.RenderConfig;
+import ch.ethzm.matsim.renderer.config.VehicleConfig;
 import ch.ethzm.matsim.renderer.network.LinkDatabase;
 import ch.ethzm.matsim.renderer.traversal.TraversalDatabase;
 import ch.ethzm.matsim.renderer.traversal.VehicleDatabase;
@@ -37,15 +43,31 @@ public class RenderFrame extends JPanel {
 	final private BitSet isPt;
 	final private BitSet isFreight;
 
+	private final int windowWidth;
+	private final int windowHeight;
+	private final RenderConfig renderConfig;
+
+	private final List<Color> linkColors;
+	private final List<Color> vehicleColors;
+	private final List<Color> activityColors;
+	private final List<Double> activityMaximumLifetimes;
+	private final List<Double> activitySizes;
+
 	public RenderFrame(TraversalDatabase traversalDatabase, LinkDatabase linkDatabase,
-			ActivityDatabase activityDatabase, ActivityTypeMapper activityTypeMapper, VehicleDatabase vehicleDatabase) {
+			ActivityDatabase activityDatabase, ActivityTypeMapper activityTypeMapper, VehicleDatabase vehicleDatabase,
+			RenderConfig renderConfig) {
 		this.traversalDatabase = traversalDatabase;
 		this.linkDatabase = linkDatabase;
 		this.activityDatabase = activityDatabase;
 		this.activityTypeMapper = activityTypeMapper;
 		this.vehicleDatabase = vehicleDatabase;
 
-		setSize(Main.windowWidth, Main.windowHeight);
+		this.renderConfig = renderConfig;
+		this.time = renderConfig.startTime;
+		windowWidth = renderConfig.width;
+		windowHeight = renderConfig.height;
+
+		setSize(renderConfig.width, renderConfig.height);
 		setVisible(true);
 		setBackground(Color.WHITE);
 
@@ -66,9 +88,34 @@ public class RenderFrame extends JPanel {
 				isFreight.set(entry.getValue());
 			}
 		}
+
+		this.linkColors = new ArrayList<>(renderConfig.networks.size());
+
+		for (NetworkConfig networkConfig : renderConfig.networks) {
+			linkColors
+					.add(new Color(networkConfig.color.get(0), networkConfig.color.get(1), networkConfig.color.get(2)));
+		}
+
+		this.vehicleColors = new ArrayList<>(renderConfig.vehicles.size());
+
+		for (VehicleConfig vehicleConfig : renderConfig.vehicles) {
+			vehicleColors
+					.add(new Color(vehicleConfig.color.get(0), vehicleConfig.color.get(1), vehicleConfig.color.get(2)));
+		}
+
+		this.activityColors = new ArrayList<>(renderConfig.activities.size());
+		this.activityMaximumLifetimes = new ArrayList<>(renderConfig.activities.size());
+		this.activitySizes = new ArrayList<>(renderConfig.activities.size());
+
+		for (ActivityConfig activtiyConfig : renderConfig.activities) {
+			activityColors.add(
+					new Color(activtiyConfig.color.get(0), activtiyConfig.color.get(1), activtiyConfig.color.get(2)));
+			activityMaximumLifetimes.add(activtiyConfig.maximumLifetime);
+			activitySizes.add(activtiyConfig.size);
+		}
 	}
 
-	private double time = 9.0 * 3600.0;
+	private double time;
 	private long previousRenderTime = -1;
 	private boolean makeVideo = true;
 
@@ -77,29 +124,17 @@ public class RenderFrame extends JPanel {
 
 	private long frameIndex = 0;
 
-	private final Color systemX = new Color(7, 145, 222);
-	private final Color odysseeOrange = new Color(241, 87, 38);
-	private final Color odysseeGreen = new Color(86, 196, 165);
-	private final Color black = new Color(0, 0, 0);
-	private final Color yellow = new Color(255, 255, 60);
-	private final Color red = new Color(255, 0, 0);
-
-	// private Color vehicleColor = odysseeOrange; // black;
-	// private Color activityColor = odysseeGreen; // systemX;
-	private Color vehicleColor = black;
-	private Color activityColor = systemX;
-
 	Object imageLock = new Object();
 
 	@Override
 	public void paintComponent(Graphics windowGraphics) {
 		Rectangle windowBounds = getBounds();
 
-		BufferedImage surface = new BufferedImage(Main.windowWidth, Main.windowHeight, BufferedImage.TYPE_INT_RGB);
+		BufferedImage surface = new BufferedImage(windowWidth, windowHeight, BufferedImage.TYPE_INT_RGB);
 		Graphics2D graphics = (Graphics2D) surface.getGraphics();
 
 		graphics.setColor(Color.WHITE);
-		graphics.fillRect(0, 0, Main.windowWidth, Main.windowHeight);
+		graphics.fillRect(0, 0, windowWidth, windowHeight);
 
 		long currentRenderTime = System.nanoTime();
 
@@ -117,55 +152,23 @@ public class RenderFrame extends JPanel {
 			time += timeStepPerSecond * delay * 1e-9;
 		}
 
-		if (time > 10.0 * 3600.0) {
-			time = 10.0 * 3600.0;
-			System.exit(1);
+		if (time > renderConfig.endTime) {
+			if (makeVideo) {
+				System.exit(1);
+			} else {
+				time = renderConfig.startTime;
+			}
 		}
 
-		// Coord bellevue = new Coord(2683253.0, 1246745.0);
-		// double zoom = 10000.0;
+		Coord center = new Coord(renderConfig.center.get(0), renderConfig.center.get(1));
+		double zoom = renderConfig.zoom;
 
-		// Norway
-		// Coord bellevue = CoordUtils.plus(new Coord(-447597.0, 1254618.0), new
-		// Coord(0.0, 0.0));
-		// double zoom = 20000.0 + (time - 8.0 * 3600.0) / (2.0 * 3600.0) * 380000.0;
+		double f = (double) windowHeight / (double) windowWidth;
 
-		// Toulouse
-		// Coord bellevue = CoordUtils.plus(new Coord(574004.0 - 10000, 6279261.0), new
-		// Coord(0.0, 0.0));
-		// double zoom = 10000.0 + (time - 5.0 * 3600.0) / (20.0 * 3600.0) * 40000.0;
-		// zoom = 20000.0;
-		// Occitanie center 665705 6278555
-
-		// Paris
-		Coord bellevue = CoordUtils.plus(new Coord(651791.0 - 5000.0, 6862293.0), new
-		Coord(0.0, 0.0));
-		//Coord bellevue = CoordUtils.plus(new Coord(654011.0, 6860737.0), new Coord(0.0, 0.0));
-		double zoom = 10000.0; // + (time - 10.0 * 3600.0) / (2.0 * 3600.0) * 380000.0;
-
-		// Lyon
-		/*
-		 * Coord bellevue = CoordUtils.plus(new Coord(841423.0, 6517233.0), new
-		 * Coord(0.0, 0.0));
-		 */
-
-		// Confluence
-		// Coord bellevue = CoordUtils.plus(new Coord(841469.0, 6517253.0), new
-		// Coord(0.0, 0.0));
-		// double zoom = 8000.0 - 6000.0 * (time - 7.5 * 3600.0) / ((20.0 - 7.5) *
-		// 3600);
-
-		/*
-		 * double zoom = 10000.0 + (time - 7.5 * 3600.0) / (2.0 * 3600.0) * 40000.0;
-		 * zoom = 8000.0;
-		 */
-
-		double f = (double) Main.windowHeight / (double) Main.windowWidth;
-
-		double minx = bellevue.getX() - zoom;
-		double maxx = bellevue.getX() + zoom;
-		double miny = bellevue.getY() - zoom * f;
-		double maxy = bellevue.getY() + zoom * f;
+		double minx = center.getX() - zoom;
+		double maxx = center.getX() + zoom;
+		double miny = center.getY() - zoom * f;
+		double maxy = center.getY() + zoom * f;
 
 		Rectangle scenarioBounds = new Rectangle((int) minx, (int) miny, (int) (maxx - minx), (int) (maxy - miny));
 
@@ -174,48 +177,25 @@ public class RenderFrame extends JPanel {
 		Graphics2D g2d = (Graphics2D) graphics;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		linkDatabase.getLinks().stream().filter(l -> scenarioBounds.contains(l.getCoord().getX(), l.getCoord().getY()))
-				.filter(l -> l.getAllowedModes().contains("car")) //
-				.forEach(l -> {
-					g2d.setColor(new Color(240, 240, 240));
+		linkDatabase.getLinks().stream()
+				.filter(l -> scenarioBounds.contains(l.link.getCoord().getX(), l.link.getCoord().getY()))
+				.filter(l -> l.typeIndex >= 0).forEach(l -> {
+					g2d.setColor(linkColors.get(l.typeIndex));
 
-					Coord fromCoord = transform.scenarioToWindow(l.getFromNode().getCoord());
-					Coord toCoord = transform.scenarioToWindow(l.getToNode().getCoord());
-
-					g2d.drawLine((int) fromCoord.getX(), (int) fromCoord.getY(), (int) toCoord.getX(),
-							(int) toCoord.getY());
-				});
-
-		linkDatabase.getLinks().stream().filter(l -> scenarioBounds.contains(l.getCoord().getX(), l.getCoord().getY()))
-				.filter(l -> l.getAllowedModes().contains("subway")) //
-				.forEach(l -> {
-					g2d.setColor(new Color(180, 180, 180));
-
-					Coord fromCoord = transform.scenarioToWindow(l.getFromNode().getCoord());
-					Coord toCoord = transform.scenarioToWindow(l.getToNode().getCoord());
+					Coord fromCoord = transform.scenarioToWindow(l.link.getFromNode().getCoord());
+					Coord toCoord = transform.scenarioToWindow(l.link.getToNode().getCoord());
 
 					g2d.drawLine((int) fromCoord.getX(), (int) fromCoord.getY(), (int) toCoord.getX(),
 							(int) toCoord.getY());
 				});
 
 		traversalDatabase.getTraversalsAtTime(time)
-				.filter(t -> scenarioBounds.contains(linkDatabase.getLink(t.linkIndex).getCoord().getX(),
-						linkDatabase.getLink(t.linkIndex).getCoord().getY()))
-				.sequential().forEach(t -> {
-					boolean show = true;
-					
-					if (/* isAv */ isAv.get(t.vehicleIndex)) {
-						g2d.setColor(Color.BLUE.darker());
-					} else if (isPt.get(t.vehicleIndex)) {
-						g2d.setColor(systemX);
-					} else if (isFreight.get(t.vehicleIndex)) {
-						g2d.setColor(Color.RED);
-					} else {
-						g2d.setColor(vehicleColor);
-						show = false;
-					}
+				.filter(t -> scenarioBounds.contains(linkDatabase.getLink(t.linkIndex).link.getCoord().getX(),
+						linkDatabase.getLink(t.linkIndex).link.getCoord().getY()))
+				.filter(t -> t.vehicleType >= 0).sequential().forEach(t -> {
+					g2d.setColor(vehicleColors.get(t.vehicleType));
 
-					Link link = linkDatabase.getLink(t.linkIndex);
+					Link link = linkDatabase.getLink(t.linkIndex).link;
 
 					double s = (time - t.startTime) / (t.endTime - t.startTime);
 
@@ -223,79 +203,41 @@ public class RenderFrame extends JPanel {
 							CoordUtils.minus(link.getToNode().getCoord(), link.getFromNode().getCoord())));
 
 					coord = transform.scenarioToWindow(coord);
-
-					if (show) {
-						g2d.fillOval((int) coord.getX() - 2, (int) coord.getY() - 2, 4, 4);
-					}
+					g2d.fillOval((int) coord.getX() - 2, (int) coord.getY() - 2, 4, 4);
 				});
 
-		double activityMarkerLifetime = 700.0;
-		double activityMarkerSize = 20.0;
-
-		int pickupTypeIndex = activityTypeMapper.hasActivityType("AVPickup") ? activityTypeMapper.getIndex("AVPickup")
-				: -1;
-		int dropoffTypeIndex = activityTypeMapper.hasActivityType("AVDropoff")
-				? activityTypeMapper.getIndex("AVDropoff")
-				: -1;
-		int workTypeIndex = activityTypeMapper.hasActivityType("work") ? activityTypeMapper.getIndex("work") : -1;
-		int leisureTypeIndex = activityTypeMapper.hasActivityType("leisure") ? activityTypeMapper.getIndex("leisure")
-				: -1;
-		int serviceTypeIndex = activityTypeMapper.hasActivityType("service") ? activityTypeMapper.getIndex("service")
-				: -1;
-		int startTypeIndex = activityTypeMapper.hasActivityType("start") ? activityTypeMapper.getIndex("start") : -1;
-		int endTypeIndex = activityTypeMapper.hasActivityType("end") ? activityTypeMapper.getIndex("end") : -1;
-		int fPickupTypeIndex = activityTypeMapper.hasActivityType("pickup") ? activityTypeMapper.getIndex("pickup")
-				: -1;
-		int fDeliverTypeIndex = activityTypeMapper.hasActivityType("delivery") ? activityTypeMapper.getIndex("delivery")
-				: -1;
-
 		activityDatabase.getActivitiesAtTime(time)
-				.filter(t -> scenarioBounds.contains(linkDatabase.getLink(t.linkIndex).getCoord().getX(),
-						linkDatabase.getLink(t.linkIndex).getCoord().getY()))
-				// .filter(t -> t.typeIndex == pickupTypeIndex || t.typeIndex ==
-				// dropoffTypeIndex).sequential()
-				// .filter(t -> t.typeIndex == workTypeIndex || t.typeIndex == leisureTypeIndex)
-				// //
-				// .filter(t -> t.typeIndex == serviceTypeIndex || t.typeIndex == startTypeIndex
-				// || t.typeIndex == endTypeIndex || t.typeIndex == fPickupTypeIndex ||
-				// t.typeIndex == fDeliverTypeIndex) //
-				.filter(t -> t.typeIndex == workTypeIndex) //
+				.filter(t -> scenarioBounds.contains(linkDatabase.getLink(t.linkIndex).link.getCoord().getX(),
+						linkDatabase.getLink(t.linkIndex).link.getCoord().getY()))
+				.filter(t -> t.typeIndex >= 0) //
 				.sequential().forEach(a -> {
-					Link link = linkDatabase.getLink(a.linkIndex);
+					Link link = linkDatabase.getLink(a.linkIndex).link;
 					Coord coord = transform.scenarioToWindow(link.getCoord());
 
 					double lifetime = time - a.startTime;
-					double maximumLifetime = Math.min(activityMarkerLifetime, a.endTime - a.startTime);
 
-					if (lifetime <= activityMarkerLifetime) {
+					double activityLifetime = activityMaximumLifetimes.get(a.typeIndex);
+					double maximumLifetime = Math.min(activityLifetime, a.endTime - a.startTime);
+
+					if (lifetime <= activityLifetime) {
 						double intensity = lifetime / maximumLifetime;
 
-						double size = activityMarkerSize * intensity;
+						double size = activitySizes.get(a.typeIndex) * intensity;
 						double alpha = Math.floor(200.0 - 200.0 * intensity);
+						Color color = activityColors.get(a.typeIndex);
 
-						if (a.typeIndex == leisureTypeIndex) {
-							// g2d.setColor(new Color(yellow.getRed(), yellow.getGreen(), yellow.getBlue(),
-							// (int) alpha));
-						} else if (a.typeIndex == pickupTypeIndex) {
-							g2d.setColor(Color.RED);
-						} else {
-							g2d.setColor(new Color(activityColor.getRed(), activityColor.getGreen(),
-									activityColor.getBlue(), (int) alpha));
-						}
-
-						/*
-						 * if (a.typeIndex == pickupTypeIndex) { g2d.setColor(new Color(0, 0, 255, (int)
-						 * alpha)); } else { g2d.setColor(new Color(255, 0, 0, (int) alpha)); }
-						 */
+						g2d.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) alpha));
 
 						g2d.fillOval((int) (coord.getX() - 0.5 * size), (int) (coord.getY() - 0.5 * size), (int) size,
 								(int) size);
 					}
 				});
 
-		graphics.setColor(vehicleColor);
-		graphics.setFont(new Font(graphics.getFont().getName(), Font.BOLD, 20));
-		// graphics.drawString(Time.writeTime(time), 40, 40);
+		if (renderConfig.showTime) {
+			graphics.setColor(Color.BLACK);
+			graphics.setFont(new Font(graphics.getFont().getName(), Font.BOLD, 20));
+			graphics.drawString(Time.writeTime(time), 40, 40);
+		}
 
 		if (makeVideo) {
 			try {
