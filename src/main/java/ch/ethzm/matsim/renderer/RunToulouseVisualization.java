@@ -37,7 +37,7 @@ public class RunToulouseVisualization {
 		renderConfig.showTime = false;
 
 		renderConfig.center = Arrays.asList(555438.0, 6245742.0);
-		renderConfig.zoom = 14000.0;
+		renderConfig.zoom = 40000.0;
 
 		NetworkConfig roadNetwork = new NetworkConfig();
 		renderConfig.networks.add(roadNetwork);
@@ -46,17 +46,12 @@ public class RunToulouseVisualization {
 
 		VehicleConfig generalVehicle = new VehicleConfig();
 		renderConfig.vehicles.add(generalVehicle);
-		generalVehicle.color = Arrays.asList(200, 200, 200);
+		generalVehicle.color = Arrays.asList(241, 87, 38);
 
-		VehicleConfig taxiVehicle = new VehicleConfig();
-		renderConfig.vehicles.add(taxiVehicle);
-		taxiVehicle.startsWith = Arrays.asList("taxi");
-		taxiVehicle.color = Arrays.asList(0, 0, 0);
-
-		ActivityConfig pudoActivity = new ActivityConfig();
-		renderConfig.activities.add(pudoActivity);
-		pudoActivity.types = Arrays.asList("pickup", "dropoff");
-		pudoActivity.color = Arrays.asList(7, 145, 222);
+		ActivityConfig workActivity = new ActivityConfig();
+		renderConfig.activities.add(workActivity);
+		workActivity.types = Arrays.asList("work");
+		workActivity.color = Arrays.asList(86, 196, 165);
 
 		// END CONFIGURATION
 
