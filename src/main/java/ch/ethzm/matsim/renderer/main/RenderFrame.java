@@ -49,6 +49,7 @@ public class RenderFrame extends JPanel {
 
 	private final List<Color> linkColors;
 	private final List<Color> vehicleColors;
+	private final List<Integer> vehicleSizes;
 	private final List<Color> activityColors;
 	private final List<Double> activityMaximumLifetimes;
 	private final List<Double> activitySizes;
@@ -101,6 +102,13 @@ public class RenderFrame extends JPanel {
 		for (VehicleConfig vehicleConfig : renderConfig.vehicles) {
 			vehicleColors
 					.add(new Color(vehicleConfig.color.get(0), vehicleConfig.color.get(1), vehicleConfig.color.get(2)));
+		}
+		
+		this.vehicleSizes = new ArrayList<>(renderConfig.vehicles.size());
+
+		for (VehicleConfig vehicleConfig : renderConfig.vehicles) {
+			vehicleSizes
+					.add(vehicleConfig.size);
 		}
 
 		this.activityColors = new ArrayList<>(renderConfig.activities.size());
@@ -203,7 +211,9 @@ public class RenderFrame extends JPanel {
 							CoordUtils.minus(link.getToNode().getCoord(), link.getFromNode().getCoord())));
 
 					coord = transform.scenarioToWindow(coord);
-					g2d.fillOval((int) coord.getX() - 2, (int) coord.getY() - 2, 4, 4);
+					
+					int size = vehicleSizes.get(t.vehicleType);
+					g2d.fillOval((int) coord.getX() - size / 2, (int) coord.getY() - size / 2, size, size);
 				});
 
 		activityDatabase.getActivitiesAtTime(time)
@@ -243,7 +253,7 @@ public class RenderFrame extends JPanel {
 			try {
 				synchronized (imageLock) {
 					ImageIO.write(surface, "png",
-							new File(String.format("/home/shoerl/video/video_%d.png", frameIndex)));
+							new File(String.format(renderConfig.outputPath + "/video_%d.png", frameIndex)));
 
 					System.out.println(Time.writeTime(time));
 				}

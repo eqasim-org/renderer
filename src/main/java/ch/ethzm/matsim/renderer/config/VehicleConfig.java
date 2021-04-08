@@ -10,6 +10,7 @@ public class VehicleConfig {
 	public List<String> contains = new LinkedList<>();
 
 	public List<Integer> color = Arrays.asList(200, 200, 200);
+	public int size = 4;
 
 	public void validate() {
 		if (color.size() != 3) {
