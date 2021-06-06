@@ -68,6 +68,8 @@ public class RenderFrame extends JPanel {
 		windowWidth = renderConfig.width;
 		windowHeight = renderConfig.height;
 
+		this.timeStepPerSecond = renderConfig.secondsPerFrame;
+
 		setSize(renderConfig.width, renderConfig.height);
 		setVisible(true);
 		setBackground(Color.WHITE);
@@ -103,12 +105,11 @@ public class RenderFrame extends JPanel {
 			vehicleColors
 					.add(new Color(vehicleConfig.color.get(0), vehicleConfig.color.get(1), vehicleConfig.color.get(2)));
 		}
-		
+
 		this.vehicleSizes = new ArrayList<>(renderConfig.vehicles.size());
 
 		for (VehicleConfig vehicleConfig : renderConfig.vehicles) {
-			vehicleSizes
-					.add(vehicleConfig.size);
+			vehicleSizes.add(vehicleConfig.size);
 		}
 
 		this.activityColors = new ArrayList<>(renderConfig.activities.size());
@@ -127,7 +128,7 @@ public class RenderFrame extends JPanel {
 	private long previousRenderTime = -1;
 	private boolean makeVideo = true;
 
-	double timeStepPerSecond = 120; // 600; // 120.0;
+	private double timeStepPerSecond; // 600; // 120.0;
 	double framesPerSecond = 25.0;
 
 	private long frameIndex = 0;
@@ -211,7 +212,7 @@ public class RenderFrame extends JPanel {
 							CoordUtils.minus(link.getToNode().getCoord(), link.getFromNode().getCoord())));
 
 					coord = transform.scenarioToWindow(coord);
-					
+
 					int size = vehicleSizes.get(t.vehicleType);
 					g2d.fillOval((int) coord.getX() - size / 2, (int) coord.getY() - size / 2, size, size);
 				});
