@@ -2,6 +2,9 @@ package ch.ethzm.matsim.renderer;
 
 import java.util.Arrays;
 
+import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
+
 import ch.ethzm.matsim.renderer.config.ActivityConfig;
 import ch.ethzm.matsim.renderer.config.NetworkConfig;
 import ch.ethzm.matsim.renderer.config.RenderConfig;
@@ -9,7 +12,7 @@ import ch.ethzm.matsim.renderer.config.VehicleConfig;
 import ch.ethzm.matsim.renderer.main.RunRenderer;
 
 public class RunToulouseVisualization {
-	static public void main(String[] args) {
+	static public void main(String[] args) throws ConfigurationException {
 		/*-
 		 * This script writes a series of png files to an output directory,
 		 * visualizing a MATSim simulation. As input it needs a network file and an
@@ -19,6 +22,10 @@ public class RunToulouseVisualization {
 		 * ffmpeg -framerate 25 -i video_%d.png -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4
 		 */
 
+		CommandLine cmd = new CommandLine.Builder(args) //
+				.requireOptions("network-path", "events-path", "output-path") //
+				.build();
+
 		// START CONFIGURATION
 
 		RenderConfig renderConfig = new RenderConfig();
@@ -26,9 +33,9 @@ public class RunToulouseVisualization {
 		renderConfig.width = 1280;
 		renderConfig.height = 720;
 
-		renderConfig.networkPath = "/home/shoerl/Downloads/toulouse_output_5pct/output_network.xml.gz";
-		renderConfig.eventsPath = "/home/shoerl/Downloads/toulouse_output_5pct/output_events.xml.gz";
-		renderConfig.outputPath = "/home/shoerl/video/toulouse";
+		renderConfig.networkPath = cmd.getOptionStrict("network-path");
+		renderConfig.eventsPath = cmd.getOptionStrict("events-path");
+		renderConfig.outputPath = cmd.getOptionStrict("output-path");
 
 		renderConfig.startTime = 8.0 * 3600.0;
 		renderConfig.endTime = 9.0 * 3600.0;
