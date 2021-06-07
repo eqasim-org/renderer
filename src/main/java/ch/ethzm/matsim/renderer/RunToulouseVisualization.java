@@ -43,7 +43,7 @@ public class RunToulouseVisualization {
 
 		renderConfig.showTime = false;
 
-		renderConfig.center = Arrays.asList(555438.0, 6245742.0);
+		renderConfig.center = Arrays.asList(573361.0, 6278698.0);
 		renderConfig.zoom = 40000.0;
 
 		NetworkConfig roadNetwork = new NetworkConfig();
