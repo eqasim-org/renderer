@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class ActivityConfig {
 	public List<String> types = new LinkedList<>();
 	public List<Integer> color = Arrays.asList(200, 200, 200);
@@ -17,6 +19,7 @@ public class ActivityConfig {
 		}
 	}
 
+	@JsonIgnore
 	public boolean isGeneric() {
 		return types.size() == 0;
 	}

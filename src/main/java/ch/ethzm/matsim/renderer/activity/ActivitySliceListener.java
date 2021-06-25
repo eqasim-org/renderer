@@ -18,15 +18,17 @@ public class ActivitySliceListener implements ActivityStartEventHandler, Activit
 	final private ActivityDatabase activityDatabase;
 	final private Network network;
 	final private ActivityTypeMapper typeMapper;
+	final private double minimumDuration;
 
 	final private Map<Id<Person>, ActivityStartEvent> startEvents = new HashMap<>();
 
 	public ActivitySliceListener(LinkDatabase linkDatabase, ActivityDatabase activityDatabase,
-			ActivityTypeMapper typeMapper, Network network) {
+			ActivityTypeMapper typeMapper, Network network, double minimumDuration) {
 		this.linkDatabase = linkDatabase;
 		this.activityDatabase = activityDatabase;
 		this.network = network;
 		this.typeMapper = typeMapper;
+		this.minimumDuration = minimumDuration;
 	}
 
 	@Override
@@ -35,7 +37,8 @@ public class ActivitySliceListener implements ActivityStartEventHandler, Activit
 
 		if (startEvent != null) {
 			int linkIndex = linkDatabase.getIndex(network.getLinks().get(startEvent.getLinkId()));
-			ActivitySlice slice = new ActivitySlice(startEvent.getTime(), endEvent.getTime(),
+			double endTime = Math.max(endEvent.getTime(), startEvent.getTime() + minimumDuration);
+			ActivitySlice slice = new ActivitySlice(startEvent.getTime(), endTime,
 					typeMapper.addActivityType(startEvent.getActType()), linkIndex);
 			activityDatabase.addActivity(slice);
 		}

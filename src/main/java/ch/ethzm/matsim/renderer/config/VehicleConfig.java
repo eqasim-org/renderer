@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class VehicleConfig {
 	public List<String> startsWith = new LinkedList<>();
 	public List<String> endsWith = new LinkedList<>();
@@ -18,6 +20,7 @@ public class VehicleConfig {
 		}
 	}
 
+	@JsonIgnore
 	public boolean isGeneric() {
 		return startsWith.size() == 0 && endsWith.size() == 0 && contains.size() == 0;
 	}

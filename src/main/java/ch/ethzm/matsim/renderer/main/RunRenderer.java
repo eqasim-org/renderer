@@ -26,7 +26,7 @@ public class RunRenderer {
 
 	static public void run(RenderConfig renderConfig) {
 		renderConfig.validate();
-		
+
 		// Prepare databases to read information
 
 		double startTime = renderConfig.startTime;
@@ -57,7 +57,7 @@ public class RunRenderer {
 		TraversalListener traversalListener = new TraversalListener(linkDatabase, traversalDatabase, network,
 				vehicleDatabase);
 		ActivitySliceListener activityListener = new ActivitySliceListener(linkDatabase, activityDatabase,
-				activityTypeMapper, network);
+				activityTypeMapper, network, renderConfig.minimumActivityDuration);
 		eventsManager.addHandler(traversalListener);
 		eventsManager.addHandler(activityListener);
 		new MatsimEventsReader(eventsManager).readFile(eventsPath);

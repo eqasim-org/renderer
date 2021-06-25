@@ -27,6 +27,7 @@ public class RenderConfig {
 	public List<ActivityConfig> activities = new ArrayList<>();
 
 	public boolean showTime = false;
+	public double minimumActivityDuration = 0.0;
 
 	public void validate() {
 		if (center.size() != 2) {
