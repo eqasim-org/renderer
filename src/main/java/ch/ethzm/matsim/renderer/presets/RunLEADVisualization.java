@@ -1,4 +1,4 @@
-package ch.ethzm.matsim.renderer;
+package ch.ethzm.matsim.renderer.presets;
 
 import java.util.Arrays;
 
