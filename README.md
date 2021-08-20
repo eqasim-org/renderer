@@ -41,3 +41,5 @@ ffmpeg -framerate 25 -i video_%d.png -c:v libx264 -profile:v high -crf 20 -pix_f
 ```
 
 An example output can be seen in `example/output.mp4`.
+
+![Example](example/output.png)
