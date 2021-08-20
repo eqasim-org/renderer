@@ -1,0 +1,28 @@
+{
+  "width": 1280,
+  "height": 720,
+
+  "networkPath": "output_network.xml.gz",
+  "eventsPath": "output_events.xml.gz",
+  "outputPath": "video_output",
+
+  "startTime": 28800.0,
+  "endTime": 32400.0,
+  "secondsPerFrame": 120,
+
+  "center": [651791.0, 6862293.0],
+  "zoom": 10000.0,
+
+  "networks": [
+    {
+      "modes": ["car"],
+      "color": [240, 240, 240]
+    }
+  ],
+
+  "vehicles": [
+    {
+      "color": [7, 145, 222]
+    }
+  ]
+}
