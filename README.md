@@ -43,3 +43,8 @@ ffmpeg -framerate 25 -i video_%d.png -c:v libx264 -profile:v high -crf 20 -pix_f
 An example output can be seen in `example/output.mp4`.
 
 ![Example](example/output.png)
+
+## Video output
+
+As of November 2021, the renderer can also produce videos directly. For that, add the `outputFormat` option to the configuration file and set it to `Video`. The output path will then be interpreted as a path to a video file and the video will be created at this place.
+

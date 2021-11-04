@@ -10,6 +10,12 @@ public class RenderConfig {
 	public String eventsPath;
 	public String networkPath;
 
+	public enum OutputFormat {
+		None, Images, Video
+	}
+
+	public OutputFormat outputFormat = OutputFormat.Video;
+
 	public double startTime = 0.0;
 	public double endTime = 24 * 3600.0;
 	public double secondsPerFrame = 120.0;
@@ -44,8 +50,12 @@ public class RenderConfig {
 
 		File outputFile = new File(outputPath);
 
-		if (outputFile.exists() && !outputFile.isDirectory()) {
+		if (outputFile.exists() && !outputFile.isDirectory() && outputFormat.equals(OutputFormat.Images)) {
 			throw new IllegalStateException("Output path is not a directory");
+		}
+		
+		if (outputFile.exists() && !outputFile.isFile() && outputFormat.equals(OutputFormat.Video)) {
+			throw new IllegalStateException("Output path is not a file");
 		}
 
 		networks.forEach(NetworkConfig::validate);

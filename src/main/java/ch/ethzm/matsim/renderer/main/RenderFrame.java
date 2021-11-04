@@ -27,10 +27,21 @@ import ch.ethzm.matsim.renderer.activity.ActivityTypeMapper;
 import ch.ethzm.matsim.renderer.config.ActivityConfig;
 import ch.ethzm.matsim.renderer.config.NetworkConfig;
 import ch.ethzm.matsim.renderer.config.RenderConfig;
+import ch.ethzm.matsim.renderer.config.RenderConfig.OutputFormat;
 import ch.ethzm.matsim.renderer.config.VehicleConfig;
 import ch.ethzm.matsim.renderer.network.LinkDatabase;
 import ch.ethzm.matsim.renderer.traversal.TraversalDatabase;
 import ch.ethzm.matsim.renderer.traversal.VehicleDatabase;
+import io.humble.video.Codec;
+import io.humble.video.Encoder;
+import io.humble.video.MediaPacket;
+import io.humble.video.MediaPicture;
+import io.humble.video.Muxer;
+import io.humble.video.MuxerFormat;
+import io.humble.video.PixelFormat;
+import io.humble.video.Rational;
+import io.humble.video.awt.MediaPictureConverter;
+import io.humble.video.awt.MediaPictureConverterFactory;
 
 public class RenderFrame extends JPanel {
 	final private TraversalDatabase traversalDatabase;
@@ -62,6 +73,9 @@ public class RenderFrame extends JPanel {
 		this.activityDatabase = activityDatabase;
 		this.activityTypeMapper = activityTypeMapper;
 		this.vehicleDatabase = vehicleDatabase;
+
+		this.makeVideo = renderConfig.outputFormat.equals(OutputFormat.Images)
+				|| renderConfig.outputFormat.equals(OutputFormat.Video);
 
 		this.renderConfig = renderConfig;
 		this.time = renderConfig.startTime;
@@ -126,7 +140,7 @@ public class RenderFrame extends JPanel {
 
 	private double time;
 	private long previousRenderTime = -1;
-	private boolean makeVideo = true;
+	private final boolean makeVideo;
 
 	private double timeStepPerSecond; // 600; // 120.0;
 	double framesPerSecond = 25.0;
@@ -163,6 +177,18 @@ public class RenderFrame extends JPanel {
 
 		if (time > renderConfig.endTime) {
 			if (makeVideo) {
+				if (renderConfig.outputFormat.equals(OutputFormat.Video)) {
+					if (muxer != null) {
+						do {
+							encoder.encode(packet, null);
+							if (packet.isComplete())
+								muxer.write(packet, false);
+						} while (packet.isComplete());
+
+						muxer.close();
+					}
+				}
+
 				System.exit(1);
 			} else {
 				time = renderConfig.startTime;
@@ -251,19 +277,78 @@ public class RenderFrame extends JPanel {
 		}
 
 		if (makeVideo) {
-			try {
-				synchronized (imageLock) {
-					ImageIO.write(surface, "png",
-							new File(String.format(renderConfig.outputPath + "/video_%d.png", frameIndex)));
+			if (renderConfig.outputFormat.equals(OutputFormat.Images)) {
+				try {
+					synchronized (imageLock) {
+						ImageIO.write(surface, "png",
+								new File(String.format(renderConfig.outputPath + "/video_%d.png", frameIndex)));
 
-					System.out.println(Time.writeTime(time));
+						System.out.println(Time.writeTime(time));
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			} else {
+				try {
+					if (muxer == null) {
+						muxer = Muxer.make(renderConfig.outputPath, null, null);
+
+						MuxerFormat format = muxer.getFormat();
+						Codec codec = Codec.findEncodingCodec(format.getDefaultVideoCodecId());
+
+						encoder = Encoder.make(codec);
+						encoder.setWidth(renderConfig.width);
+						encoder.setHeight(renderConfig.height);
+						// We are going to use 420P as the format because that's what most video formats
+						// these days use
+						final PixelFormat.Type pixelformat = PixelFormat.Type.PIX_FMT_YUV420P;
+						encoder.setPixelFormat(pixelformat);
+						encoder.setTimeBase(Rational.make(1.0 / 25.0));
+
+						if (format.getFlag(MuxerFormat.Flag.GLOBAL_HEADER)) {
+							encoder.setFlag(Encoder.Flag.FLAG_GLOBAL_HEADER, true);
+						}
+
+						encoder.open(null, null);
+						muxer.addNewStream(encoder);
+
+						muxer.open(null, null);
+
+						picture = MediaPicture.make(encoder.getWidth(), encoder.getHeight(), pixelformat);
+						picture.setTimeBase(Rational.make(1.0 / 25.0));
+
+						packet = MediaPacket.make();
+					}
+
+					do {
+						BufferedImage newImage = new BufferedImage(surface.getWidth(), surface.getHeight(),
+								BufferedImage.TYPE_3BYTE_BGR);
+						newImage.getGraphics().drawImage(surface, 0, 0, null);
+
+						if (converter == null) {
+							converter = MediaPictureConverterFactory.createConverter(newImage, picture);
+						}
+
+						converter.toPicture(picture, newImage, frameIndex);
+
+						encoder.encode(packet, picture);
+						if (packet.isComplete()) {
+							muxer.write(packet, false);
+						}
+					} while (packet.isComplete());
+				} catch (IOException | InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
 		super.paintComponent(windowGraphics);
 		windowGraphics.drawImage(surface, 0, 0, this);
 	}
+
+	private Muxer muxer = null;
+	private Encoder encoder = null;
+	private MediaPicture picture = null;
+	private MediaPacket packet = null;
+	private MediaPictureConverter converter = null;
 }
