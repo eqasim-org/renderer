@@ -54,8 +54,7 @@ public class RunRenderer {
 		}
 
 		EventsManager eventsManager = new EventsManagerImpl();
-		TraversalListener traversalListener = new TraversalListener(linkDatabase, traversalDatabase, network,
-				vehicleDatabase);
+		TraversalListener traversalListener = new TraversalListener(traversalDatabase, vehicleDatabase, renderConfig);
 		ActivitySliceListener activityListener = new ActivitySliceListener(linkDatabase, activityDatabase,
 				activityTypeMapper, network, renderConfig.minimumActivityDuration);
 		eventsManager.addHandler(traversalListener);

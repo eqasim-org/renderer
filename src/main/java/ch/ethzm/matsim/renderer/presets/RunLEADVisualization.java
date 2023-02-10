@@ -28,7 +28,7 @@ public class RunLEADVisualization {
 
 		renderConfig.networkPath = "/home/shoerl/lead/movements_output/output_network.xml.gz";
 		renderConfig.eventsPath = "/home/shoerl/lead/movements_output/output_events.xml.gz";
-		renderConfig.outputPath = "/home/shoerl/lead/movements_visualisation";
+		renderConfig.outputPath = "/home/shoerl/lead/movements_visualisation.mp4";
 
 		renderConfig.startTime = 6.0 * 3600.0 + 10.0 * 60.0;
 		renderConfig.endTime = 7.0 * 3600.0;
