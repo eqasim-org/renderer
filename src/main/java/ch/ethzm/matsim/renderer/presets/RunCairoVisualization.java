@@ -8,7 +8,7 @@ import ch.ethzm.matsim.renderer.config.RenderConfig;
 import ch.ethzm.matsim.renderer.config.VehicleConfig;
 import ch.ethzm.matsim.renderer.main.RunRenderer;
 
-public class RunNantesVisualization {
+public class RunCairoVisualization {
 	static public void main(String[] args) {
 		// START CONFIGURATION
 
@@ -17,18 +17,18 @@ public class RunNantesVisualization {
 		renderConfig.width = 1280;
 		renderConfig.height = 720;
 
-		renderConfig.networkPath = "output_network.xml.gz";
-		renderConfig.eventsPath = "output_events.xml.gz";
+		renderConfig.networkPath = "simulation_output/output_network.xml.gz";
+		renderConfig.eventsPath = "simulation_output/output_events.xml.gz";
 		renderConfig.outputPath = "video.mp4";
 
 		renderConfig.startTime = 8.0 * 3600.0;
-		renderConfig.endTime = 10.0 * 3600.0;
+		renderConfig.endTime = 9.0 * 3600.0;
 		renderConfig.secondsPerFrame = 120.0;
 
 		renderConfig.showTime = false;
 
-		renderConfig.center = Arrays.asList(355424.0, 6689212.0);
-		renderConfig.zoom = 20000.0;
+		renderConfig.center = Arrays.asList(638372.0, 818741.0);
+		renderConfig.zoom = 40000.0;
 
 		NetworkConfig roadNetwork = new NetworkConfig();
 		renderConfig.networks.add(roadNetwork);

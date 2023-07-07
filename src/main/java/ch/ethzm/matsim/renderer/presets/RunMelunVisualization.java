@@ -8,7 +8,7 @@ import ch.ethzm.matsim.renderer.config.RenderConfig;
 import ch.ethzm.matsim.renderer.config.VehicleConfig;
 import ch.ethzm.matsim.renderer.main.RunRenderer;
 
-public class RunNantesVisualization {
+public class RunMelunVisualization {
 	static public void main(String[] args) {
 		// START CONFIGURATION
 
@@ -17,9 +17,9 @@ public class RunNantesVisualization {
 		renderConfig.width = 1280;
 		renderConfig.height = 720;
 
-		renderConfig.networkPath = "output_network.xml.gz";
-		renderConfig.eventsPath = "output_events.xml.gz";
-		renderConfig.outputPath = "video.mp4";
+		renderConfig.networkPath = "/home/shoerl/temp/melun_video/output_network.xml.gz";
+		renderConfig.eventsPath = "/home/shoerl/temp/melun_video/output_events.xml.gz";
+		renderConfig.outputPath = "/home/shoerl/temp/melun_video/video.mp4";
 
 		renderConfig.startTime = 8.0 * 3600.0;
 		renderConfig.endTime = 10.0 * 3600.0;
@@ -27,7 +27,7 @@ public class RunNantesVisualization {
 
 		renderConfig.showTime = false;
 
-		renderConfig.center = Arrays.asList(355424.0, 6689212.0);
+		renderConfig.center = Arrays.asList(674772.8, 6826534.3);
 		renderConfig.zoom = 20000.0;
 
 		NetworkConfig roadNetwork = new NetworkConfig();

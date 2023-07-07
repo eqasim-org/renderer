@@ -1,10 +1,5 @@
 package ch.ethzm.matsim.renderer.main;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.swing.JFrame;
-
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -18,12 +13,13 @@ import ch.ethzm.matsim.renderer.activity.ActivitySliceListener;
 import ch.ethzm.matsim.renderer.activity.ActivityTypeMapper;
 import ch.ethzm.matsim.renderer.config.RenderConfig;
 import ch.ethzm.matsim.renderer.network.LinkDatabase;
+import ch.ethzm.matsim.renderer.renderer.Renderer;
+import ch.ethzm.matsim.renderer.renderer.VideoTarget;
 import ch.ethzm.matsim.renderer.traversal.TraversalDatabase;
 import ch.ethzm.matsim.renderer.traversal.TraversalListener;
 import ch.ethzm.matsim.renderer.traversal.VehicleDatabase;
 
 public class RunRenderer {
-
 	static public void run(RenderConfig renderConfig) {
 		renderConfig.validate();
 
@@ -62,20 +58,9 @@ public class RunRenderer {
 		eventsManager.addHandler(activityListener);
 		new MatsimEventsReader(eventsManager).readFile(eventsPath);
 
-		// Prepare rendering
+		Renderer renderer = new Renderer(renderConfig.width, renderConfig.height, renderConfig, traversalDatabase,
+				linkDatabase, activityDatabase, activityTypeMapper, vehicleDatabase);
 
-		JFrame mainFrame = new JFrame("Renderer");
-		RenderFrame renderFrame = new RenderFrame(traversalDatabase, linkDatabase, activityDatabase, activityTypeMapper,
-				vehicleDatabase, renderConfig);
-
-		mainFrame.add(renderFrame);
-		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		mainFrame.setSize(renderConfig.width, renderConfig.height);
-		mainFrame.setLayout(null);
-		mainFrame.setVisible(true);
-
-		Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
-			renderFrame.repaint();
-		}, 0, 10, TimeUnit.MILLISECONDS);
+		new VideoTarget(renderConfig).run(renderer);
 	}
 }

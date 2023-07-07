@@ -1,21 +1,14 @@
-package ch.ethzm.matsim.renderer.main;
+package ch.ethzm.matsim.renderer.renderer;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
-
-import javax.imageio.ImageIO;
-import javax.swing.JPanel;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
@@ -27,36 +20,24 @@ import ch.ethzm.matsim.renderer.activity.ActivityTypeMapper;
 import ch.ethzm.matsim.renderer.config.ActivityConfig;
 import ch.ethzm.matsim.renderer.config.NetworkConfig;
 import ch.ethzm.matsim.renderer.config.RenderConfig;
-import ch.ethzm.matsim.renderer.config.RenderConfig.OutputFormat;
 import ch.ethzm.matsim.renderer.config.VehicleConfig;
+import ch.ethzm.matsim.renderer.main.Transform;
 import ch.ethzm.matsim.renderer.network.LinkDatabase;
 import ch.ethzm.matsim.renderer.traversal.TraversalDatabase;
 import ch.ethzm.matsim.renderer.traversal.VehicleDatabase;
-import io.humble.video.Codec;
-import io.humble.video.Encoder;
-import io.humble.video.MediaPacket;
-import io.humble.video.MediaPicture;
-import io.humble.video.Muxer;
-import io.humble.video.MuxerFormat;
-import io.humble.video.PixelFormat;
-import io.humble.video.Rational;
-import io.humble.video.awt.MediaPictureConverter;
-import io.humble.video.awt.MediaPictureConverterFactory;
 
-public class RenderFrame extends JPanel {
+public class Renderer {
+	private final int windowWidth;
+	private final int windowHeight;
+
+	private final RenderConfig renderConfig;
+
 	final private TraversalDatabase traversalDatabase;
 	final private LinkDatabase linkDatabase;
 	final private ActivityDatabase activityDatabase;
+
 	final private ActivityTypeMapper activityTypeMapper;
 	final private VehicleDatabase vehicleDatabase;
-
-	final private BitSet isAv;
-	final private BitSet isPt;
-	final private BitSet isFreight;
-
-	private final int windowWidth;
-	private final int windowHeight;
-	private final RenderConfig renderConfig;
 
 	private final List<Color> linkColors;
 	private final List<Color> vehicleColors;
@@ -65,28 +46,25 @@ public class RenderFrame extends JPanel {
 	private final List<Double> activityMaximumLifetimes;
 	private final List<Double> activitySizes;
 
-	public RenderFrame(TraversalDatabase traversalDatabase, LinkDatabase linkDatabase,
-			ActivityDatabase activityDatabase, ActivityTypeMapper activityTypeMapper, VehicleDatabase vehicleDatabase,
-			RenderConfig renderConfig) {
+	final private BitSet isAv;
+	final private BitSet isPt;
+	final private BitSet isFreight;
+
+	public Renderer(int windowWidth, int windowHeight, RenderConfig renderConfig, TraversalDatabase traversalDatabase,
+			LinkDatabase linkDatabase, ActivityDatabase activityDatabase, ActivityTypeMapper activityTypeMapper,
+			VehicleDatabase vehicleDatabase) {
+		this.windowWidth = windowWidth;
+		this.windowHeight = windowHeight;
+
+		this.renderConfig = renderConfig;
 		this.traversalDatabase = traversalDatabase;
 		this.linkDatabase = linkDatabase;
 		this.activityDatabase = activityDatabase;
 		this.activityTypeMapper = activityTypeMapper;
 		this.vehicleDatabase = vehicleDatabase;
 
-		this.makeVideo = renderConfig.outputFormat.equals(OutputFormat.Images)
-				|| renderConfig.outputFormat.equals(OutputFormat.Video);
-
-		this.renderConfig = renderConfig;
-		this.time = renderConfig.startTime;
 		windowWidth = renderConfig.width;
 		windowHeight = renderConfig.height;
-
-		this.timeStepPerSecond = renderConfig.secondsPerFrame;
-
-		setSize(renderConfig.width, renderConfig.height);
-		setVisible(true);
-		setBackground(Color.WHITE);
 
 		this.isAv = new BitSet(vehicleDatabase.getVehicleIndices().size());
 		this.isPt = new BitSet(vehicleDatabase.getVehicleIndices().size());
@@ -138,62 +116,10 @@ public class RenderFrame extends JPanel {
 		}
 	}
 
-	private double time;
-	private long previousRenderTime = -1;
-	private final boolean makeVideo;
-
-	private double timeStepPerSecond; // 600; // 120.0;
-	double framesPerSecond = 25.0;
-
-	private long frameIndex = 0;
-
-	Object imageLock = new Object();
-
-	@Override
-	public void paintComponent(Graphics windowGraphics) {
-		Rectangle windowBounds = getBounds();
-
-		BufferedImage surface = new BufferedImage(windowWidth, windowHeight, BufferedImage.TYPE_INT_RGB);
-		Graphics2D graphics = (Graphics2D) surface.getGraphics();
-
+	public void update(Graphics2D graphics, double time) {
 		graphics.setColor(Color.WHITE);
 		graphics.fillRect(0, 0, windowWidth, windowHeight);
-
-		long currentRenderTime = System.nanoTime();
-
-		if (previousRenderTime == -1) {
-			previousRenderTime = currentRenderTime;
-		}
-
-		long delay = currentRenderTime - previousRenderTime;
-		previousRenderTime = currentRenderTime;
-
-		if (makeVideo) {
-			time += timeStepPerSecond / framesPerSecond;
-			frameIndex++;
-		} else if (delay > 0) {
-			time += timeStepPerSecond * delay * 1e-9;
-		}
-
-		if (time > renderConfig.endTime) {
-			if (makeVideo) {
-				if (renderConfig.outputFormat.equals(OutputFormat.Video)) {
-					if (muxer != null) {
-						do {
-							encoder.encode(packet, null);
-							if (packet.isComplete())
-								muxer.write(packet, false);
-						} while (packet.isComplete());
-
-						muxer.close();
-					}
-				}
-
-				System.exit(1);
-			} else {
-				time = renderConfig.startTime;
-			}
-		}
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		Coord center = new Coord(renderConfig.center.get(0), renderConfig.center.get(1));
 		double zoom = renderConfig.zoom;
@@ -206,21 +132,18 @@ public class RenderFrame extends JPanel {
 		double maxy = center.getY() + zoom * f;
 
 		Rectangle scenarioBounds = new Rectangle((int) minx, (int) miny, (int) (maxx - minx), (int) (maxy - miny));
-
+		Rectangle windowBounds = new Rectangle(0, 0, windowWidth, windowHeight);
 		Transform transform = new Transform(windowBounds, scenarioBounds);
-
-		Graphics2D g2d = (Graphics2D) graphics;
-		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		linkDatabase.getLinks().stream()
 				.filter(l -> scenarioBounds.contains(l.link.getCoord().getX(), l.link.getCoord().getY()))
 				.filter(l -> l.typeIndex >= 0).forEach(l -> {
-					g2d.setColor(linkColors.get(l.typeIndex));
+					graphics.setColor(linkColors.get(l.typeIndex));
 
 					Coord fromCoord = transform.scenarioToWindow(l.link.getFromNode().getCoord());
 					Coord toCoord = transform.scenarioToWindow(l.link.getToNode().getCoord());
 
-					g2d.drawLine((int) fromCoord.getX(), (int) fromCoord.getY(), (int) toCoord.getX(),
+					graphics.drawLine((int) fromCoord.getX(), (int) fromCoord.getY(), (int) toCoord.getX(),
 							(int) toCoord.getY());
 				});
 
@@ -228,7 +151,7 @@ public class RenderFrame extends JPanel {
 				.filter(t -> scenarioBounds.contains(linkDatabase.getLink(t.linkIndex).link.getCoord().getX(),
 						linkDatabase.getLink(t.linkIndex).link.getCoord().getY()))
 				.filter(t -> t.vehicleType >= 0).sequential().forEach(t -> {
-					g2d.setColor(vehicleColors.get(t.vehicleType));
+					graphics.setColor(vehicleColors.get(t.vehicleType));
 
 					Link link = linkDatabase.getLink(t.linkIndex).link;
 
@@ -240,7 +163,7 @@ public class RenderFrame extends JPanel {
 					coord = transform.scenarioToWindow(coord);
 
 					int size = vehicleSizes.get(t.vehicleType);
-					g2d.fillOval((int) coord.getX() - size / 2, (int) coord.getY() - size / 2, size, size);
+					graphics.fillOval((int) coord.getX() - size / 2, (int) coord.getY() - size / 2, size, size);
 				});
 
 		activityDatabase.getActivitiesAtTime(time)
@@ -263,10 +186,10 @@ public class RenderFrame extends JPanel {
 						double alpha = Math.floor(200.0 - 200.0 * intensity);
 						Color color = activityColors.get(a.typeIndex);
 
-						g2d.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) alpha));
+						graphics.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) alpha));
 
-						g2d.fillOval((int) (coord.getX() - 0.5 * size), (int) (coord.getY() - 0.5 * size), (int) size,
-								(int) size);
+						graphics.fillOval((int) (coord.getX() - 0.5 * size), (int) (coord.getY() - 0.5 * size),
+								(int) size, (int) size);
 					}
 				});
 
@@ -275,80 +198,5 @@ public class RenderFrame extends JPanel {
 			graphics.setFont(new Font(graphics.getFont().getName(), Font.BOLD, 20));
 			graphics.drawString(Time.writeTime(time), 40, 40);
 		}
-
-		if (makeVideo) {
-			if (renderConfig.outputFormat.equals(OutputFormat.Images)) {
-				try {
-					synchronized (imageLock) {
-						ImageIO.write(surface, "png",
-								new File(String.format(renderConfig.outputPath + "/video_%d.png", frameIndex)));
-
-						System.out.println(Time.writeTime(time));
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			} else {
-				try {
-					if (muxer == null) {
-						muxer = Muxer.make(renderConfig.outputPath, null, null);
-
-						MuxerFormat format = muxer.getFormat();
-						Codec codec = Codec.findEncodingCodec(format.getDefaultVideoCodecId());
-
-						encoder = Encoder.make(codec);
-						encoder.setWidth(renderConfig.width);
-						encoder.setHeight(renderConfig.height);
-						// We are going to use 420P as the format because that's what most video formats
-						// these days use
-						final PixelFormat.Type pixelformat = PixelFormat.Type.PIX_FMT_YUV420P;
-						encoder.setPixelFormat(pixelformat);
-						encoder.setTimeBase(Rational.make(1.0 / 25.0));
-
-						if (format.getFlag(MuxerFormat.Flag.GLOBAL_HEADER)) {
-							encoder.setFlag(Encoder.Flag.FLAG_GLOBAL_HEADER, true);
-						}
-
-						encoder.open(null, null);
-						muxer.addNewStream(encoder);
-
-						muxer.open(null, null);
-
-						picture = MediaPicture.make(encoder.getWidth(), encoder.getHeight(), pixelformat);
-						picture.setTimeBase(Rational.make(1.0 / 25.0));
-
-						packet = MediaPacket.make();
-					}
-
-					do {
-						BufferedImage newImage = new BufferedImage(surface.getWidth(), surface.getHeight(),
-								BufferedImage.TYPE_3BYTE_BGR);
-						newImage.getGraphics().drawImage(surface, 0, 0, null);
-
-						if (converter == null) {
-							converter = MediaPictureConverterFactory.createConverter(newImage, picture);
-						}
-
-						converter.toPicture(picture, newImage, frameIndex);
-
-						encoder.encode(packet, picture);
-						if (packet.isComplete()) {
-							muxer.write(packet, false);
-						}
-					} while (packet.isComplete());
-				} catch (IOException | InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-
-		super.paintComponent(windowGraphics);
-		windowGraphics.drawImage(surface, 0, 0, this);
 	}
-
-	private Muxer muxer = null;
-	private Encoder encoder = null;
-	private MediaPicture picture = null;
-	private MediaPacket packet = null;
-	private MediaPictureConverter converter = null;
 }
